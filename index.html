@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>service platform </title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+   <!-- Top Advertisement Banner -->
+<div id="top-ad-banner" class="ad-banner">
+    <div class="ad-content">
+        <!-- Optional Thumbnail Image for the Ad -->
+        <img src="adww.jpeg" alt="Promo Thumbnail" class="ad-image" height="120px" width="540px">
+        
+      <!-- <div class="ad-text-container">
+            <span class="ad-badge">PROMO</span>
+            <span class="ad-details">Get 20% off your first assignment order! Use code: <strong style="color: #f1c40f;">WRITE20</strong> (Ends tonight)</span>
+        </div>
+        
+        <a href="#" class="ad-cta-btn" onclick="showView('customer-view')">Order Now</a>
+    </div> -->
+
+    <!-- Close button to let users dismiss the ad 
+
+    <button class="ad-close-btn" onclick="dismissAd()">&times;</button>
+</div> -->
+
+<!--the website main code-->
+
+    <header class="navbar">
+        <div class="logo"> <img src="logo.jpeg" alt="Logo" height="70px"> Writer's World  </div>
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation">☰</button>
+        <nav class="nav-links" id="navLinks">
+            <a href="#" onclick="showSection('home')" target="-blank">Home</a>
+            <a href="#" onclick="showSection('about')" target="-blank">About Us </a>
+            <a href="#" onclick="showSection('services')" target="-blank">Services</a>
+            <a href="#" onclick="showSection('contact')" target="-blank">Contact</a>
+
+        
+          <!-- Clickable Account Avatar Logo -->
+       <button class="account-logo-btn" onclick="document.querySelectorAll('.login-view').forEach(s => s.style.display='none'); document.getElementById('account-view').style.display='block';" title="Go to Dashboard">
+    <span class="avatar-icon">👤</span>
+    <span class="avatar-badge-dot"></span>
+</button>
+</nav> 
+    </div>
+    </header>
+               
+    <main class="container">
+
+       
+
+        <!--my account section-->
+        
+  <section id="account-view" class="view-section" style="display: none;">
+    <div class="dashboard-container">
+           <button class="back-btn" onclick="showSection('home')">← Back to Home</button><br><br>
+
+        
+        <!-- Role Switcher (Mock Login State) -->
+        <div class="account-header-bar">
+            <h2>User Dashboard</h2>
+            <div class="role-toggle">
+                <label for="userRoleSelector"><strong>View Profile As:</strong></label>
+                <select id="userRoleSelector" onchange="switchDashboardRole(this.value)">
+                    <option value="customer">Mock Customer Profile</option>
+                    <option value="writer">Mock Writer Profile</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Grid Layout -->
+        <div class="dashboard-grid">
+            
+            <!-- Left Side: Profile Card -->
+            <div class="dashboard-card profile-card">
+                <div class="profile-avatar">👤</div>
+                <h3 id="profileName">Rahul Sharma</h3>
+                <p id="profileMeta" class="profile-meta">Premium Customer</p>
+                <hr style="margin: 15px 0; border: 0; border-top: 1px solid #f1f2f6;">
+                <div class="profile-details">
+                    <p><strong>Email:</strong> <span id="profileEmail">rahul@example.com</span></p>
+                    <p><strong>Mobile:</strong> <span id="profilePhone">+91 98765 43210</span></p>
+                    <div id="writerSpecificDetails" style="display: none; margin-top: 10px;">
+                        <p><strong>College:</strong> <span id="profileCollege">IIT Delhi</span></p>
+                        <p><strong>Branch:</strong> <span id="profileBranch">Computer Science</span></p>
+                        <p><strong>Daily Capacity:</strong> <span id="profileCapacity">10 Pages</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Stats and Dynamic Content -->
+            <div class="dashboard-main-content">
+                
+                <!-- Quick Stats row -->
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <h4 id="statTitle1">Total Orders</h4>
+                        <p id="statValue1" class="stat-number">12</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4 id="statTitle2">Spent Amount</h4>
+                        <p id="statValue2" class="stat-number">Rs 1,450</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4 id="statTitle3">Completed Tasks</h4>
+                        <p id="statValue3" class="stat-number">10</p>
+                    </div>
+                </div>
+
+                <!-- Custom Sections based on user type -->
+                <div class="dashboard-card dynamic-data-card">
+                    <h3 id="panelTitle" style="margin-bottom: 15px; color: #2c3e50;">Active Assignments</h3>
+                    
+                    <!-- Table for Orders or Writer Jobs -->
+                    <div class="table-responsive">
+                        <table class="dashboard-table" id="dashboardTable">
+                            <thead>
+                                <tr id="tableHeaderRow">
+                                    <th>Order ID</th>
+                                    <th>Pages</th>
+                                    <th>Timeline</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                                <!-- Populated dynamically by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Activity Log Timeline -->
+                <div class="dashboard-card timeline-card" style="margin-top: 25px;">
+                    <h3 style="margin-bottom: 15px; color: #2c3e50;">Recent Site Activity</h3>
+                    <div class="timeline" id="activityTimeline">
+                        <!-- Populated dynamically by JavaScript -->
+                    </div>
+                </div>
+
+            </div> <!-- End Right Side -->
+
+        </div> <!-- End Grid -->
+    </div>
+</section> 
+
+        <!--about section-->
+
+    <section id="about-section" class="view-section">
+       <button class="back-btn" onclick="showSection('home')">← Back to Home</button><br><br>
+
+        <b><u>ABOUT WRITER'S WORLD</u></b><br><br>
+    
+        Welcome to Writer's World—the ultimate bridge between busy students striving for competitive excellence and skilled writers looking to earn on their own terms.<br>
+        We believe that every student deserves the time to focus on what truly matters: mastering concepts, cracking competitive exams, and securing their future. We aren't here to promote laziness; we are here to optimize your time. By taking the heavy lifting of repetitive manual writing off your shoulders, we give you the freedom to focus entirely on your preparation.<br><br>
+        <b><u>Our Mission: Empowering Growth, Saving Time</u></b><br><br>
+        Preparing for competitive exams is a full-time job. Between grueling study schedules, mock tests, and coaching classes, students are often buried under mountains of mandatory assignment and file work.<br><br>
+        <b><u>Writer's World was born out of a simple realization:</u> </b><br><br>Time spent mindlessly copying pages is time stolen from active learning.
+        We act as your reliable academic support system. While you focus on conquering your exams, our community of dedicated writers ensures your files and assignments are completed neatly, accurately, and strictly on time.<br><br>
+       <b><u>How It Works</u></b><br>
+        Whether you are looking to delegate your writing work or looking to make an income, getting started is incredibly simple and takes less than two minutes.<br>
+        <b>1. Choose Your Role</b> <br>
+        Head over to our Home Page to decide whether you are looking for writing help or looking to join our writing team.<br>
+       <b> 2. Fill Out the Form</b><br>
+       <b> <u>For Students:</u> </b>Complete the Customer Form detailing your assignment requirements, page count, and deadline.<br>
+        <b><u>For Writers: </u></b>Complete the Writers Form to submit your application and join the Writers' World network.<br>
+         <b>3. Execution & Delivery</b><br>
+         Our system matches the task with a qualified writer. The work is completed to your exact specifications and delivered smoothly within your chosen timeline. <br><br>
+
+        <b><u>Transparent, Budget-Friendly Pricing</u></b><br>
+         We believe in complete transparency. We keep our customer pricing at the absolute minimum to ensure it's affordable for students, while offering fair, competitive payouts to our writing partners.<br><br>
+    
+         <b><u>Why Trust Writer's World?</u></b><br> We treat your deadlines like our own. Every page is handwritten with care, maintaining high standards of presentation so you can present your file work with absolute confidence. <br>
+         <br><b>Ready to unlock more study hours or start earning from home? Head back to our homepage and fill out your form today!</b>
+    </p>
+    </section>
+
+<!--services section-->
+
+    <section id="services-section" class="view-section">
+       <button class="back-btn" onclick="showSection('home')">← Back to Home</button><br><br>
+
+       <b> <u>Our Services</u></b><br><br>
+At Writer's World, we run a dual-purpose platform. We provide high-quality, reliable writing assistance to students who need to save precious study time, while offering a flexible, remote earning stream for dedicated writers.<br>
+<b><u>Here is exactly what we do</u>:</b><br><br>
+<b>1. Academic & Practical Writing Services (For Students)</b><br><br>
+We take care of the manual, time-consuming writing tasks so you can keep your focus 100% on cracking your competitive exams.
+<br><b>Assignment Writing:</b> Neat, well-structured, and timely completion of your subject assignments based on your provided prompts and guidelines.<br>
+<b><u>Practical File & Lab Work</u>:</b> Accurate transcription of experiments, observations, and structured lab records, presented clearly with proper formatting.<br>
+<b><u>Project Work & Reports</u>:</b> Neat handwriting of project files, case studies, and summary reports to ensure your internal grades are secured.<br>
+<b><u>Flexible Delivery Tracks</u>:</b><br>
+<b>Urgent:</b> Under 2 days (₹6/page) for last-minute emergencies.<br>
+<b>Standard:</b> 2 to 4 days (₹5/page) for balanced prep.<br>
+<b>Normal:</b> 4+ days (₹4/page) for cost-efficient planning.<br><br>
+<b>2. <u>Remote Income Opportunities (For Writers)</u></b><br><br>
+Turn your clean handwriting and spare time into an active source of income. Work on your own schedule, from the comfort of your home.<br><br>
+<b><u>Handwritten Assignment Tasks</u>:</b> Get paid to write assignments using your own clear handwriting, following the specific guidelines provided by the customer.<br><br>
+<b><u>Flexible Work Hours</u>:</b> No rigid shifts or lock-ins. You accept only the tasks that fit your personal schedule and daily routine.<br><br>
+<b><u>Transparent Payout System</u>:</b> Earn a fixed rate per page based on how quickly the student needs the assignment completed:<br><br>
+<b>Urgent:</b> ₹3.0/page (Under 2 days)<br>
+<b>Standard:</b> ₹2.5/page (2 to 4 days)<br>
+<b>Normal:</b> ₹2.0/page (4+ days)<br><br>
+<b><u>Prompt Payments</u>:</b> Receive your hard-earned money directly and securely once the completed work passes our basic quality check.<br><br>
+<b><u>Our Quality Guarantee</u>:</b> Every single assignment we deliver is written by real human hands. We strictly do not use AI-generated fonts or digital printouts. We ensure consistent handwriting style, clean page margins, and precise compliance with your structural instructions.
+    </section>
+
+    <!--contact section-->
+
+    <sectin id="contact-section" class="view-section">
+       <button class="back-btn" onclick="showSection('home')">← Back to Home</button><br><br>
+
+        you can contact us on:
+    </sectin>
+
+
+
+        <section id="home-section" class="view-section active">
+            <h1 class="main-title">Welcome to Writer's World.</h1>
+            <div class="portal-grid">
+                <div class="portal-card customer-card" onclick="showSection('customer')">
+                    <h2>I am a Customer</h2>
+                    <p>Need something written? Upload your files and set your timeline.</p>
+                    <button class="btn">Enter Customer Portal</button>
+                </div>
+                <div class="portal-card writer-card" onclick="showSection('writer')">
+                    <h2>I am a Writer</h2>
+                    <p>Want to write and earn? Join our team of professional writers.</p>
+                    <button class="btn">Enter Writer Portal</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="customer-section" class="view-section">
+            <button class="back-btn" onclick="showSection('home')">← Back to Home</button>
+            <h2>Customer Portal</h2>
+            <form id="customerForm" class="portal-form">
+
+               <div class="form-group">
+                        <label for="CustomerName">Full Name:</label>
+                        <input type="text" id="CustomerName" placeholder="Abhi Kumar" required>
+                    </div> 
+
+                  <div class="form-group">
+                        <label for="CustomerRollno.">Customer Roll no.:</label>
+                        <input type="text" id="CustomerRollno." placeholder="2024****07" required>
+                    </div>  
+                <div class="form-group">
+                    <label for="customerPdf">1. Upload your PDF requirement:</label>
+                    <input type="file" id="customerPdf" accept=".pdf" required>
+                </div>
+                <div class="form-group">
+                    <label for="Collegename">2. Choose your college:</label>
+                    <select id="Collegename" required>
+                        <option value="" disabled selected>Select the college in which you want the work done</option>
+                        <option value="urgent">MMMUT Gorakhpur</option>
+                        <option value="standard">BIET Jhanshi</option>
+                        <option value="flexible">IET Lucknow</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="deliveryTime">3. Choose Delivery Timeline:</label>
+                    <select id="deliveryTime" required>
+                        <option value="" disabled selected>Select when you need it done</option>
+                        <option value="urgent">Urgent (Within 2 Days)</option>
+                        <option value="standard">Standard (2 to 4 Days)</option>
+                        <option value="flexible">Flexible (Greater than 4 Days)</option>
+                    </select>
+                </div>
+
+                 <div class="form-group">
+                        <label for="CustomerName">4. Add a message for writer or for the website</label>
+                        <input type="text" id="CustomerName" placeholder="" >
+                    </div> 
+
+
+                <div class="rate-chart-container">
+                    <h3>Standard Rate Chart</h3>
+                    <table class="rate-table">
+                        <thead>
+                            <tr>
+                                <th>Timeline</th>
+                                <th>Rate (per page)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="rate-urgent">
+                                <td>Urgent (Within 2 Days)</td>
+                                <td>₹6.00</td>
+                            </tr>
+                            <tr class="rate-standard">
+                                <td>Standard (2 to 4 Days)</td>
+                                <td>₹5.00</td>
+                            </tr>
+                            <tr class="rate-flexible">
+                                <td>Flexible (> 4 Days)</td>
+                                <td>₹4.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div> 
+                <b><p class="diagram"> NOTE:- Digram rate is ₹5.00 per Digram </p> </b>
+                </div> <br>
+                
+                <button type="submit" class="btn submit-btn">Submit Order</button>
+            </form>
+        </section>
+
+        <section id="writer-section" class="view-section">
+            <button class="back-btn" onclick="showSection('home')">← Back to Home</button>
+            <h2>Writer Application</h2>
+            <form id="writerForm" class="portal-form">
+                
+                <div class="form-section-block">
+                    <h3>Step 1: Personal Details</h3>
+                    <div class="form-group">
+                        <label for="writerName">1. Full Name:</label>
+                        <input type="text" id="writerName" placeholder="Abhi Kumar" required>
+                    </div>
+
+                    <div class="contact-information">
+                        <label for="contact-information">2. Mobile Number</label>
+                        <input type="text" id="" placeholder="99******80" required>
+                    </div> <br>
+                    <div class="contact-information">
+                        <label for="contact-information">3. Email id </label>
+                        <input type="text" id="" placeholder="ak9***8*@gmail.com" required>
+                    </div><br>
+
+                    
+               <div class="form-group">
+                    <label for="Collegename"> 4. Choose your college:</label>
+                    <select id="Collegename" required>
+                        <option value="" disabled selected>Select the college in which you want the work done</option>
+                        <option value="urgent">MMMUT Gorakhpur</option>
+                        <option value="standard">BIET Jhanshi</option>
+                        <option value="flexible">IET Lucknow</option>
+                    </select>
+                </div>
+                    
+                    <div class="form-group">
+                    <label for="Branchname">5. Choose your Branch:</label>
+                    <select id="Branchname" required>
+                        <option value="" disabled selected>Select the Branch from the list</option>
+                        <option value="urgent">CSE</option>
+                        <option value="standard">IT</option>
+                        <option value="flexible">ECE</option>
+                        <option value="urgent">EE</option>
+                        <option value="urgent">CE</option>
+                        <option value="urgent">CHE</option>
+                        <option value="urgent">BBA</option>
+                        <option value="urgent">MCA</option>
+                        <option value="urgent">OTHER</option>
+                       <label class="block text-xs text-gray-500 mb-1">Branch</label>
+                    </select>
+                </div>
+
+                <div class="form-section-block">
+                    <h3>Step 2: Handwriting Sample</h3>
+                    <div class="form-group">
+                        <label for="writerSample">Upload an image/PDF of your handwriting:</label>
+                        <input type="file" id="writerSample" accept="image/*,.pdf" required>
+                    </div>
+                </div>
+
+                <div class="form-section-block">
+                    <h3>Step 3: Work Capacity</h3>
+                    <div class="form-group">
+                        <label for="minPages">Minimum pages you can write per day:</label>
+                        <input type="number" id="minPages" min="1" placeholder="e.g., 5" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn submit-btn">Submit Application</button>
+            </form>
+        </section>
+    </main>
+
+    <script src="script.js">
+
+        
+
+    </script>
+
+<!-- Chatbot Floating Widget -->
+<div class="chatbot-container">
+    <!-- This is the Chat Icon Button that starts the chat -->
+    <button class="chat-trigger-btn" id="chatTrigger" onclick="toggleChat()">
+        <!-- You can replace this emoji with an <img src="icon.png"> if you prefer -->
+        <span style="font-size: 28px;">💬</span>
+    </button>
+
+    <!-- Chat Window (Starts hidden) -->
+    <div class="chat-window" id="chatWindow">
+        <div class="chat-header">
+            <div class="chat-bot-profile">
+                <span class="bot-status-dot"></span>
+                <strong>GigWrite Helper</strong>
+            </div>
+            <!-- This is the 'X' button to close the chat -->
+            <button class="chat-close-x" onclick="toggleChat()">&times;</button>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot-msg">
+                Welcome to GigWrite! 👋 How can I help you today?
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Type your question..." onkeypress="handleChatKey(event)">
+            <button onclick="sendChatMessage()">Send</button>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
