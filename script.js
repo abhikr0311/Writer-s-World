@@ -1,3 +1,6 @@
+// SheetDB Endpoint Config
+const SHEETDB_URL = 'https://sheetdb.io/api/v1/eoq57kfymw90c';
+
 // Navigation Handling
 function showSection(sectionId) {
     // Hide all sections
@@ -11,74 +14,35 @@ function showSection(sectionId) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// View Section Switcher Helper
+function showView(viewId) {
+    showSection(viewId.replace('-view', ''));
+}
+
 // Mobile Menu Toggle logic
 const menuToggle = document.getElementById('menuToggle');
 const navLinks = document.getElementById('navLinks');
 
-menuToggle.addEventListener('click', () => {
-    navLinks.classList.toggle('mobile-active');
-});
+if (menuToggle && navLinks) {
+    menuToggle.addEventListener('click', () => {
+        navLinks.classList.toggle('mobile-active');
+    });
+}
 
 // Dynamic Rate Chart highlighting based on chosen delivery timeline
 const deliverySelect = document.getElementById('deliveryTime');
-deliverySelect.addEventListener('change', (e) => {
-    // Reset all rows
-    document.querySelectorAll('.rate-table tbody tr').forEach(row => row.classList.remove('highlight-rate'));
-    
-    // Highlight specific row
-    const selection = e.target.value;
-    if(selection === 'urgent') document.querySelector('.rate-urgent').classList.add('highlight-rate');
-    if(selection === 'standard') document.querySelector('.rate-standard').classList.add('highlight-rate');
-    if(selection === 'flexible') document.querySelector('.rate-flexible').classList.add('highlight-rate');
-});
-
-// Submit Handlers connecting to backend
-document.getElementById('customerForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append('pdfFile', document.getElementById('customerPdf').files[0]);
-    formData.append('timeline', deliverySelect.value);
-
-    try {
-        const response = await fetch('http://localhost:5000/api/customer-submit', {
-            method: 'POST',
-            body: formData
-        });
-        const data = await response.json();
-        alert(data.message);
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Failed to connect to the backend server.');
-    }
-});
-
-document.getElementById('writerForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append('name', document.getElementById('writerName').value);
-    formData.append('college', document.getElementById('writerCollege').value);
-    formData.append('branch', document.getElementById('writerBranch').value);
-    formData.append('handwritingSample', document.getElementById('writerSample').files[0]);
-    formData.append('minPages', document.getElementById('minPages').value);
-
-    try {
-        const response = await fetch('http://localhost:5000/api/writer-submit', {
-            method: 'POST',
-            body: formData
-        });
-        const data = await response.json();
-        alert(data.message);
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Failed to connect to the backend server.');
-    }
-});
-
-
-// ==========================================
-// YOUR EXISTING CODE (Lines 1 - 76)
-// ==========================================
-
+if (deliverySelect) {
+    deliverySelect.addEventListener('change', (e) => {
+        // Reset all rows
+        document.querySelectorAll('.rate-table tbody tr').forEach(row => row.classList.remove('highlight-rate'));
+        
+        // Highlight specific row
+        const selection = e.target.value;
+        if(selection === 'urgent') document.querySelector('.rate-urgent')?.classList.add('highlight-rate');
+        if(selection === 'standard') document.querySelector('.rate-standard')?.classList.add('highlight-rate');
+        if(selection === 'flexible') document.querySelector('.rate-flexible')?.classList.add('highlight-rate');
+    });
+}
 
 /* ==========================================================================
    CHATBOT CONTROLLER MODULE
@@ -217,10 +181,12 @@ function getBotResponse(input) {
                "📅 Standard (2 to 4 days): Rs 5 per page\n" +
                "☕ Normal (greater than 4 days): Rs 4 per page";
     }
- const greetingKeywords = ['hi', 'Hi', 'HI', 'HELLO', 'Hello', 'he', 'hey', 'hey body', 'hi bhai', 'hello brother'];
+
+    const greetingKeywords = ['hi', 'hello', 'he', 'hey', 'hey body', 'hi bhai', 'hello brother'];
     if (greetingKeywords.some(keyword => input.includes(keyword))) {
-        return "Hi welcome to writer's World , how may i help you";
+        return "Hi welcome to Writer's World, how may I help you?";
     }
+
     // Writer Earnings / Salary / Income / Making money
     const writerKeywords = ['earn', 'salary', 'income', 'writer pay', 'make money', 'writing job', 'payment', 'payout'];
     if (writerKeywords.some(keyword => input.includes(keyword))) {
@@ -240,63 +206,52 @@ function getBotResponse(input) {
     return "I didn't quite catch that. You can ask me things like:\n• 'Is this site making me lazy?'\n• 'What are the page costs for customers?'\n• 'How much do writers get paid?'\n• 'Where do I submit the forms?'";
 }
 
-// my account section
-
 /* ==========================================================================
    MY ACCOUNT / DASHBOARD ENGINE & AUTOMATIC ROUTER
    ========================================================================== */
 
 // 1. AUTOMATIC NAVIGATION & SECTION TOGGLER (PURE JS FIX)
 function setupSectionNavigation() {
-    // Find all top-level sections on the page dynamically
     const allSections = document.querySelectorAll('section, main > div, .page-section, .section');
     
-    // Attempt to locate the account panel wrapper
     const accountSection = document.getElementById('profileName')?.closest('section, main > div, .section, [id*="account"], [id*="dashboard"]') 
                           || document.getElementById('account-section') 
                           || document.getElementById('dashboard');
 
     if (!accountSection) return;
 
-    // Helper: Show specific target and hide all other sections
     window.activateSection = function(targetEl) {
         allSections.forEach(sec => {
-            if (sec === targetEl) {
-                sec.style.display = ''; // Restore original CSS display state
-            } else if (sec.contains(targetEl) || targetEl.contains(sec)) {
+            if (sec === targetEl || sec.contains(targetEl) || targetEl.contains(sec)) {
                 sec.style.display = ''; 
             } else {
-                sec.style.display = 'none'; // Hide non-active sections
+                sec.style.display = 'none'; 
             }
         });
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // Auto-detect and attach click handlers to all navigation links on the page
     const navLinks = document.querySelectorAll('a, button, nav *');
     navLinks.forEach(link => {
         const text = link.innerText?.toLowerCase().trim() || '';
         const href = link.getAttribute('href') || '';
 
-        // If link points to "My Account" / "Dashboard" / "Profile"
         if (text.includes('account') || text.includes('dashboard') || text.includes('profile') || href.includes('account')) {
-            link.addEventListener('click', (e) => {
+            link.addEventListener('click', () => {
                 activateSection(accountSection);
             });
         } 
-        // If link points to any other section (Home, About, Services, etc.)
         else if (href.startsWith('#') && href.length > 1) {
             const targetId = href.substring(1);
             const targetSec = document.getElementById(targetId);
             if (targetSec) {
-                link.addEventListener('click', (e) => {
+                link.addEventListener('click', () => {
                     activateSection(targetSec);
                 });
             }
         }
     });
 }
-
 
 // 2. SIMULATED MOCK DATABASES
 const clientDataStore = {
@@ -346,148 +301,46 @@ const freelancerDataStore = {
     ]
 };
 
-
-// 3. DASHBOARD ROLE SWITCHER
-function switchDashboardRole(role) {
-    const isWriter = (role === 'writer');
-    const db = isWriter ? freelancerDataStore : clientDataStore;
-
-    const setVal = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.innerText = val;
-    };
-
-    // 1. Update Core Bio Details
-    setVal('profileName', db.name);
-    setVal('profileEmail', db.email);
-    setVal('profilePhone', db.phone);
-    setVal('profileMeta', db.roleMeta);
-    
-    // Toggle academic sections for Writer
-    const writerSection = document.getElementById('writerSpecificDetails');
-    if (writerSection) {
-        if (isWriter) {
-            setVal('profileCollege', db.college);
-            setVal('profileBranch', db.branch);
-            setVal('profileCapacity', db.capacity);
-            writerSection.style.display = 'block';
-        } else {
-            writerSection.style.display = 'none';
-        }
-    }
-
-    // 2. Load Top Quick Stats Row
-    setVal('statTitle1', db.stats.col1.title);
-    setVal('statValue1', db.stats.col1.val);
-
-    setVal('statTitle2', db.stats.col2.title);
-    setVal('statValue2', db.stats.col2.val);
-
-    setVal('statTitle3', db.stats.col3.title);
-    setVal('statValue3', db.stats.col3.val);
-
-    // 3. Update active table structure dynamically
-    const tableHeaderRow = document.getElementById('tableHeaderRow');
-    const tableBody = document.getElementById('tableBody');
-    if (tableBody) {
-        tableBody.innerHTML = ''; // Clear old entries
-
-        if (isWriter) {
-            setVal('panelTitle', "My Allocated Writing Tasks");
-            if (tableHeaderRow) {
-                tableHeaderRow.innerHTML = `
-                    <th>Task ID</th>
-                    <th>Work Details</th>
-                    <th>Total Earnings</th>
-                    <th>Status</th>
-                `;
-            }
-            db.jobs.forEach(job => {
-                const row = `<tr>
-                    <td><strong>${job.id}</strong></td>
-                    <td>${job.details}</td>
-                    <td><strong style="color: #2ecc71;">${job.pay}</strong></td>
-                    <td><span class="badge ${job.badge}">${job.status}</span></td>
-                </tr>`;
-                tableBody.insertAdjacentHTML('beforeend', row);
-            });
-        } else {
-            setVal('panelTitle', "Active Assignment Orders");
-            if (tableHeaderRow) {
-                tableHeaderRow.innerHTML = `
-                    <th>Order ID</th>
-                    <th>Task Description</th>
-                    <th>Timeline Priority</th>
-                    <th>Status</th>
-                `;
-            }
-            db.orders.forEach(order => {
-                const row = `<tr>
-                    <td><strong>${order.id}</strong></td>
-                    <td>${order.details}</td>
-                    <td>${order.time}</td>
-                    <td><span class="badge ${order.badge}">${order.status}</span></td>
-                </tr>`;
-                tableBody.insertAdjacentHTML('beforeend', row);
-            });
-        }
-    }
-
-    // 4. Update timeline details
-    const timelineContainer = document.getElementById('activityTimeline');
-    if (timelineContainer) {
-        timelineContainer.innerHTML = '';
-        db.activityLog.forEach(log => {
-            const item = `
-                <div class="timeline-item">
-                    <div class="timeline-time">${log.time}</div>
-                    <div class="timeline-content">${log.event}</div>
-                </div>
-            `;
-            timelineContainer.insertAdjacentHTML('beforeend', item);
-        });
-    }
-}
-
-
 // 4. INITIALIZE ON LOAD
 document.addEventListener('DOMContentLoaded', () => {
-    // Setup section visibility and auto navigation
     setupSectionNavigation();
 
-    // Render initial Customer details safely
     const profileCheck = document.getElementById('profileName');
     if (profileCheck) {
         switchDashboardRole('customer');
     }
 });
+
 /* ==========================================================================
-   DYNAMIC LOCAL STORAGE INTEGRATION
+   DYNAMIC LOCAL STORAGE & GOOGLE SHEETS INTEGRATION
    ========================================================================== */
 
-// 1. SAVE CUSTOMER DATA ON FORM SUBMISSION
+// 1. SAVE CUSTOMER DATA ON FORM SUBMISSION & SEND TO GOOGLE SHEET
 const customerForm = document.getElementById('customerForm');
 if (customerForm) {
-    customerForm.addEventListener('submit', function(e) {
-        // Prevent page reload so we can save data first
+    customerForm.addEventListener('submit', async function(e) {
         e.preventDefault(); 
         
-        // Grab values from your existing input elements (adjust IDs to match yours)
+        const nameVal = document.getElementById('custName')?.value || "Active Customer";
+        const emailVal = document.getElementById('custEmail')?.value || "customer@example.com";
+        const phoneVal = document.getElementById('custPhone')?.value || "+91 XXXXX XXXXX";
+        const timelineVal = document.getElementById('deliveryTime')?.value || "Standard";
+
         const customerData = {
-            name: document.getElementById('custName')?.value || "Active Customer",
-            email: document.getElementById('custEmail')?.value || "customer@example.com",
-            phone: document.getElementById('custPhone')?.value || "+91 XXXXX XXXXX",
+            name: nameVal,
+            email: emailVal,
+            phone: phoneVal,
             roleMeta: "Registered Client",
             stats: {
                 col1: { title: "Jobs Ordered", val: "1 File" },
-                col2: { title: "Total Spent", val: "Rs 60" }, // Mock calculation
+                col2: { title: "Total Spent", val: "Rs 60" },
                 col3: { title: "Completed", val: "0 Files" }
             },
             orders: [
                 { 
-                    id: "#GW-" + Math.floor(1000 + Math.random() * 9000), // Generates random ID
+                    id: "#GW-" + Math.floor(1000 + Math.random() * 9000),
                     details: "Your Submitted Assignment Task", 
-                    time: "Standard (2-4 days)", 
+                    time: timelineVal, 
                     status: "Pending", 
                     badge: "badge-pending" 
                 }
@@ -497,30 +350,59 @@ if (customerForm) {
             ]
         };
 
-        // Save into Browser Storage
+        // Save into Browser Local Storage
         localStorage.setItem('savedCustomer', JSON.stringify(customerData));
-        alert('Order submitted successfully! Your profile has been created.');
+
+        // Push data live to Google Sheet using SheetDB API (Customer Tab)
+        try {
+            await fetch(`${SHEETDB_URL}?sheet=Customer`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    data: {
+                        "Timestamp": new Date().toLocaleString(),
+                        "Name": nameVal,
+                        "Email": emailVal,
+                        "Phone": phoneVal,
+                        "Timeline": timelineVal
+                    }
+                })
+            });
+        } catch (error) {
+            console.error('Error sending data to Google Sheets via SheetDB:', error);
+        }
+
+        alert('Order submitted successfully! Details synced with Google Sheets.');
         
-        // Redirect to Account View
         showView('account-view');
         switchDashboardRole('customer');
     });
 }
 
-// 2. SAVE WRITER DATA ON FORM SUBMISSION
+// 2. SAVE WRITER DATA ON FORM SUBMISSION & SEND TO GOOGLE SHEET
 const writerForm = document.getElementById('writerForm');
 if (writerForm) {
-    writerForm.addEventListener('submit', function(e) {
+    writerForm.addEventListener('submit', async function(e) {
         e.preventDefault();
 
+        const nameVal = document.getElementById('writerName')?.value || "Active Writer";
+        const emailVal = document.getElementById('writerEmail')?.value || "writer@example.com";
+        const phoneVal = document.getElementById('writerPhone')?.value || "+91 XXXXX XXXXX";
+        const collegeVal = document.getElementById('writerCollege')?.value || "Not Specified";
+        const branchVal = document.getElementById('writerBranch')?.value || "Not Specified";
+        const minPagesVal = document.getElementById('minPages')?.value || "5";
+
         const writerData = {
-            name: document.getElementById('writerName')?.value || "Active Writer",
-            email: document.getElementById('writerEmail')?.value || "writer@example.com",
-            phone: document.getElementById('writerPhone')?.value || "+91 XXXXX XXXXX",
+            name: nameVal,
+            email: emailVal,
+            phone: phoneVal,
             roleMeta: "Verified Candidate",
-            college: document.getElementById('writerCollege')?.value || "Not Specified",
-            branch: document.getElementById('writerBranch')?.value || "Not Specified",
-            capacity: "5 Pages/Day",
+            college: collegeVal,
+            branch: branchVal,
+            capacity: `${minPagesVal} Pages/Day`,
             stats: {
                 col1: { title: "Jobs Written", val: "0 Tasks" },
                 col2: { title: "Total Earned", val: "Rs 0.00" },
@@ -534,11 +416,35 @@ if (writerForm) {
             ]
         };
 
-        // Save into Browser Storage
+        // Save into Browser Local Storage
         localStorage.setItem('savedWriter', JSON.stringify(writerData));
-        alert('Application received! Your writer profile is ready to view.');
+
+        // Push data live to Google Sheet using SheetDB API (Writer Tab)
+        try {
+            await fetch(`${SHEETDB_URL}?sheet=Writer`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    data: {
+                        "Timestamp": new Date().toLocaleString(),
+                        "Name": nameVal,
+                        "Email": emailVal,
+                        "Phone": phoneVal,
+                        "College": collegeVal,
+                        "Branch": branchVal,
+                        "Daily Capacity": minPagesVal
+                    }
+                })
+            });
+        } catch (error) {
+            console.error('Error sending data to Google Sheets via SheetDB:', error);
+        }
+
+        alert('Application received! Profile stored in Google Sheets.');
         
-        // Redirect to Account View
         showView('account-view');
         switchDashboardRole('writer');
     });
@@ -548,7 +454,6 @@ if (writerForm) {
 function switchDashboardRole(role) {
     const isWriter = (role === 'writer');
     
-    // Check if we have saved data in localStorage, otherwise fall back to default hardcoded store
     let db;
     if (isWriter) {
         const storedWriter = localStorage.getItem('savedWriter');
@@ -558,32 +463,36 @@ function switchDashboardRole(role) {
         db = storedCustomer ? JSON.parse(storedCustomer) : clientDataStore;
     }
 
-    // Update HTML Elements exactly like before
-    document.getElementById('profileName').innerText = db.name;
-    document.getElementById('profileEmail').innerText = db.email;
-    document.getElementById('profilePhone').innerText = db.phone;
-    document.getElementById('profileMeta').innerText = db.roleMeta;
+    const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = val;
+    };
+
+    setVal('profileName', db.name);
+    setVal('profileEmail', db.email);
+    setVal('profilePhone', db.phone);
+    setVal('profileMeta', db.roleMeta);
     
     const writerSection = document.getElementById('writerSpecificDetails');
     if (writerSection) {
         if (isWriter) {
-            document.getElementById('profileCollege').innerText = db.college || "N/A";
-            document.getElementById('profileBranch').innerText = db.branch || "N/A";
-            document.getElementById('profileCapacity').innerText = db.capacity || "N/A";
+            setVal('profileCollege', db.college || "N/A");
+            setVal('profileBranch', db.branch || "N/A");
+            setVal('profileCapacity', db.capacity || "N/A");
             writerSection.style.display = 'block';
         } else {
             writerSection.style.display = 'none';
         }
     }
 
-    document.getElementById('statTitle1').innerText = db.stats.col1.title;
-    document.getElementById('statValue1').innerText = db.stats.col1.val;
+    setVal('statTitle1', db.stats.col1.title);
+    setVal('statValue1', db.stats.col1.val);
 
-    document.getElementById('statTitle2').innerText = db.stats.col2.title;
-    document.getElementById('statValue2').innerText = db.stats.col2.val;
+    setVal('statTitle2', db.stats.col2.title);
+    setVal('statValue2', db.stats.col2.val);
 
-    document.getElementById('statTitle3').innerText = db.stats.col3.title;
-    document.getElementById('statValue3').innerText = db.stats.col3.val;
+    setVal('statTitle3', db.stats.col3.title);
+    setVal('statValue3', db.stats.col3.val);
 
     const tableHeaderRow = document.getElementById('tableHeaderRow');
     const tableBody = document.getElementById('tableBody');
@@ -591,7 +500,7 @@ function switchDashboardRole(role) {
         tableBody.innerHTML = '';
 
         if (isWriter) {
-            document.getElementById('panelTitle').innerText = "My Allocated Writing Tasks";
+            setVal('panelTitle', "My Allocated Writing Tasks");
             if (tableHeaderRow) {
                 tableHeaderRow.innerHTML = `<th>Task ID</th><th>Work Details</th><th>Total Earnings</th><th>Status</th>`;
             }
@@ -604,7 +513,7 @@ function switchDashboardRole(role) {
                 </tr>`);
             });
         } else {
-            document.getElementById('panelTitle').innerText = "Active Assignment Orders";
+            setVal('panelTitle', "Active Assignment Orders");
             if (tableHeaderRow) {
                 tableHeaderRow.innerHTML = `<th>Order ID</th><th>Task Description</th><th>Timeline Priority</th><th>Status</th>`;
             }
@@ -640,24 +549,22 @@ function switchDashboardRole(role) {
 const localLoginForm = document.getElementById('localLoginForm');
 if (localLoginForm) {
     localLoginForm.addEventListener('submit', function(e) {
-        e.preventDefault(); // Stop page reload
+        e.preventDefault(); 
         
         const enteredEmail = document.getElementById('loginEmail').value.trim().toLowerCase();
         const selectedRole = document.getElementById('loginRole').value;
         
         if (selectedRole === 'customer') {
-            // Check for customer data in local browser storage
             const savedCustomerRaw = localStorage.getItem('savedCustomer');
             
             if (savedCustomerRaw) {
                 const customerData = JSON.parse(savedCustomerRaw);
-                // Verify if the email address matches what they registered with
                 if (customerData.email.toLowerCase() === enteredEmail) {
                     alert(`Welcome back, ${customerData.name}!`);
                     showView('account-view');
                     
-                    // Set dropdown to Customer and load their specific details
-                    document.getElementById('userRoleSelector').value = 'customer';
+                    const roleSelector = document.getElementById('userRoleSelector');
+                    if (roleSelector) roleSelector.value = 'customer';
                     switchDashboardRole('customer');
                     return;
                 }
@@ -665,18 +572,16 @@ if (localLoginForm) {
             alert("No customer account found matching this email address on this browser.");
             
         } else if (selectedRole === 'writer') {
-            // Check for writer data in local browser storage
             const savedWriterRaw = localStorage.getItem('savedWriter');
             
             if (savedWriterRaw) {
                 const writerData = JSON.parse(savedWriterRaw);
-                // Verify if the writer email address matches
                 if (writerData.email.toLowerCase() === enteredEmail) {
                     alert(`Welcome back to the studio, ${writerData.name}!`);
                     showView('account-view');
                     
-                    // Set dropdown to Writer and load their specific details
-                    document.getElementById('userRoleSelector').value = 'writer';
+                    const roleSelector = document.getElementById('userRoleSelector');
+                    if (roleSelector) roleSelector.value = 'writer';
                     switchDashboardRole('writer');
                     return;
                 }
@@ -685,4 +590,3 @@ if (localLoginForm) {
         }
     });
 }
-
