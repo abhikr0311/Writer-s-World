@@ -319,23 +319,27 @@ document.addEventListener('DOMContentLoaded', () => {
    DYNAMIC LOCAL STORAGE & GOOGLE SHEETS INTEGRATION
    ========================================================================== */
 
-
 // 1. CLIENT PORTAL / CUSTOMER FORM HANDLER
 const customerForm = document.getElementById('customerForm');
 if (customerForm) {
     customerForm.addEventListener('submit', async function(e) {
         e.preventDefault(); 
         
-        // Grab inputs matching Screenshot 1 (Client Portal Form)
+        // Grab inputs matching your exact HTML screenshot
         const fullName = document.getElementById('custName')?.value || '';
         const rollNo = document.getElementById('custRollNo')?.value || '';
         const email = document.getElementById('custEmail')?.value || '';
-        const college = document.getElementById('custCollege')?.value || '';
-        const deliveryTime = document.getElementById('deliveryTime')?.value || '';
+        
+        // Gets College name selected from <select id="custCollege">
+        const collegeSelect = document.getElementById('custCollege');
+        const college = collegeSelect ? collegeSelect.options[collegeSelect.selectedIndex]?.text : '';
+        
+        // Delivery time & Address (from remaining part of your form)
+        const deliveryTime = document.getElementById('deliveryTime')?.value || 'Flexible';
         const deliveryAddress = document.getElementById('custAddress')?.value || '';
         const message = document.getElementById('custMessage')?.value || '';
         
-        // Handle PDF File Upload (Captures uploaded file name)
+        // File Upload (Captures filename)
         const pdfFile = document.getElementById('customerPdf')?.files[0];
         const pdfName = pdfFile ? pdfFile.name : 'No file uploaded';
 
@@ -367,7 +371,7 @@ if (customerForm) {
 
         // Push data live to Google Sheet (Customer Tab)
         try {
-            await fetch(`${SHEETDB_URL}?sheet=Customer`, {
+            const response = await fetch(`${SHEETDB_URL}?sheet=Customer`, {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
@@ -386,16 +390,23 @@ if (customerForm) {
                     }
                 })
             });
-            alert('Client request submitted successfully!');
+
+            if (response.ok) {
+                alert('Client request submitted successfully!');
+            } else {
+                alert('Saved locally, but Google Sheet rejected entry. Check headers!');
+            }
         } catch (error) {
             console.error('SheetDB Sync Error:', error);
             alert('Saved locally, but failed to sync to Google Sheets.');
         }
         
-        if (typeof showView === 'function') showView('account');
-        if (typeof switchDashboardRole === 'function') switchDashboardRole('customer');
+        // Redirect back to home section cleanly
+        if (typeof showSection === 'function') showSection('customer');
     });
 }
+
+
 
 // 2. WRITER APPLICATION FORM HANDLER
 const writerForm = document.getElementById('writerForm');
