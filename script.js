@@ -7,9 +7,13 @@ function showSection(sectionId) {
     document.querySelectorAll('.view-section').forEach(section => {
         section.classList.remove('active');
     });
-    // Show selected section
-    document.getElementById(`${sectionId}-section`).classList.add('active');
-    
+// Check if target section exists before adding 'active' class
+    const targetSection = document.getElementById(`${sectionId}-section`) || document.getElementById(sectionId);
+    if (targetSection) {
+        targetSection.classList.add('active');
+    } else {
+        console.warn(`Section with ID "${sectionId}-section" was not found in HTML.`);
+    }    
     // Smooth scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -388,7 +392,7 @@ if (customerForm) {
             alert('Saved locally, but failed to sync to Google Sheets.');
         }
         
-        if (typeof showView === 'function') showView('account-view');
+        if (typeof showView === 'function') showView('account');
         if (typeof switchDashboardRole === 'function') switchDashboardRole('customer');
     });
 }
