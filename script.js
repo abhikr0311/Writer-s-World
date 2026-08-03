@@ -319,57 +319,33 @@ document.addEventListener('DOMContentLoaded', () => {
    DYNAMIC LOCAL STORAGE & GOOGLE SHEETS INTEGRATION
    ========================================================================== */
 
-// 1. CLIENT PORTAL / CUSTOMER FORM HANDLER
+// -------------------------------------------------------------
+// 2. CLIENT PORTAL FORM HANDLER (Replace your existing customerForm block)
+// -------------------------------------------------------------
 const customerForm = document.getElementById('customerForm');
 if (customerForm) {
     customerForm.addEventListener('submit', async function(e) {
         e.preventDefault(); 
         
-        // Grab inputs matching your exact HTML screenshot
+        // Extract field values matching your HTML IDs
         const fullName = document.getElementById('custName')?.value || '';
         const rollNo = document.getElementById('custRollNo')?.value || '';
         const email = document.getElementById('custEmail')?.value || '';
         
-        // Gets College name selected from <select id="custCollege">
+        // Get Selected College Name from Dropdown
         const collegeSelect = document.getElementById('custCollege');
         const college = collegeSelect ? collegeSelect.options[collegeSelect.selectedIndex]?.text : '';
         
-        // Delivery time & Address (from remaining part of your form)
+        // Get remaining form inputs
         const deliveryTime = document.getElementById('deliveryTime')?.value || 'Flexible';
         const deliveryAddress = document.getElementById('custAddress')?.value || '';
         const message = document.getElementById('custMessage')?.value || '';
         
-        // File Upload (Captures filename)
-        const pdfFile = document.getElementById('customerPdf')?.files[0];
-        const pdfName = pdfFile ? pdfFile.name : 'No file uploaded';
+        // 📄 Convert PDF File to Openable Data String
+        const pdfFileInput = document.getElementById('customerPdf')?.files[0];
+        const pdfDataUrl = await convertFileToDataUrl(pdfFileInput);
 
-        // Update Local Storage Dashboard
-        const customerData = {
-            name: fullName || "Active Customer",
-            email: email || "customer@example.com",
-            phone: "+91 XXXXX XXXXX",
-            roleMeta: "Registered Client",
-            stats: {
-                col1: { title: "Jobs Ordered", val: "1 File" },
-                col2: { title: "Total Spent", val: "Rs 60" },
-                col3: { title: "Completed", val: "0 Files" }
-            },
-            orders: [
-                { 
-                    id: "#GW-" + Math.floor(1000 + Math.random() * 9000),
-                    details: `${college} - ${pdfName}`, 
-                    time: deliveryTime, 
-                    status: "Pending", 
-                    badge: "badge-pending" 
-                }
-            ],
-            activityLog: [
-                { time: "Just Now", event: `Submitted assignment request for ${college}.` }
-            ]
-        };
-        localStorage.setItem('savedCustomer', JSON.stringify(customerData));
-
-        // Push data live to Google Sheet (Customer Tab)
+        // Send Data to Google Sheet via SheetDB
         try {
             const response = await fetch(`${SHEETDB_URL}?sheet=Customer`, {
                 method: 'POST',
@@ -383,7 +359,7 @@ if (customerForm) {
                         "Delivery Time": deliveryTime,
                         "Roll no.": rollNo,
                         "college name": college,
-                        "PDF": pdfName,
+                        "PDF": pdfDataUrl, // <-- Uploaded PDF is now stored here
                         "Delivery Address": deliveryAddress,
                         "Message for Us": message,
                         "Current status": "Pending"
@@ -393,20 +369,16 @@ if (customerForm) {
 
             if (response.ok) {
                 alert('Client request submitted successfully!');
+                customerForm.reset(); // Resets form fields after submission
             } else {
-                alert('Saved locally, but Google Sheet rejected entry. Check headers!');
+                alert('Submission failed. Please check sheet configuration.');
             }
         } catch (error) {
             console.error('SheetDB Sync Error:', error);
-            alert('Saved locally, but failed to sync to Google Sheets.');
+            alert('Network error occurred while submitting.');
         }
-        
-        // Redirect back to home section cleanly
-        if (typeof showSection === 'function') showSection('customer');
     });
 }
-
-
 
 // 2. WRITER APPLICATION FORM HANDLER
 const writerForm = document.getElementById('writerForm');
