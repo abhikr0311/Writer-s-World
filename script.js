@@ -1,3 +1,18 @@
+// Converts an uploaded PDF/file into an openable data string
+function convertFileToDataUrl(file) {
+    return new Promise((resolve) => {
+        if (!file) resolve('No file uploaded');
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            resolve(e.target.result); // Full openable file string
+        };
+        reader.onerror = function() {
+            resolve('Error reading file');
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
 // SheetDB Endpoint Config
 const SHEETDB_URL = 'https://sheetdb.io/api/v1/eoq57kfymw90c';
 
