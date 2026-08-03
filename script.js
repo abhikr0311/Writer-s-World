@@ -315,21 +315,31 @@ document.addEventListener('DOMContentLoaded', () => {
    DYNAMIC LOCAL STORAGE & GOOGLE SHEETS INTEGRATION
    ========================================================================== */
 
-// 1. SAVE CUSTOMER DATA ON FORM SUBMISSION & SEND TO GOOGLE SHEET
+
+// 1. CLIENT PORTAL / CUSTOMER FORM HANDLER
 const customerForm = document.getElementById('customerForm');
 if (customerForm) {
     customerForm.addEventListener('submit', async function(e) {
         e.preventDefault(); 
         
-        const nameVal = document.getElementById('custName')?.value || "Active Customer";
-        const emailVal = document.getElementById('custEmail')?.value || "customer@example.com";
-        const phoneVal = document.getElementById('custPhone')?.value || "+91 XXXXX XXXXX";
-        const timelineVal = document.getElementById('deliveryTime')?.value || "Standard";
+        // Grab inputs matching Screenshot 1 (Client Portal Form)
+        const fullName = document.getElementById('custName')?.value || '';
+        const rollNo = document.getElementById('custRollNo')?.value || '';
+        const email = document.getElementById('custEmail')?.value || '';
+        const college = document.getElementById('custCollege')?.value || '';
+        const deliveryTime = document.getElementById('deliveryTime')?.value || '';
+        const deliveryAddress = document.getElementById('custAddress')?.value || '';
+        const message = document.getElementById('custMessage')?.value || '';
+        
+        // Handle PDF File Upload (Captures uploaded file name)
+        const pdfFile = document.getElementById('customerPdf')?.files[0];
+        const pdfName = pdfFile ? pdfFile.name : 'No file uploaded';
 
+        // Update Local Storage Dashboard
         const customerData = {
-            name: nameVal,
-            email: emailVal,
-            phone: phoneVal,
+            name: fullName || "Active Customer",
+            email: email || "customer@example.com",
+            phone: "+91 XXXXX XXXXX",
             roleMeta: "Registered Client",
             stats: {
                 col1: { title: "Jobs Ordered", val: "1 File" },
@@ -339,21 +349,19 @@ if (customerForm) {
             orders: [
                 { 
                     id: "#GW-" + Math.floor(1000 + Math.random() * 9000),
-                    details: "Your Submitted Assignment Task", 
-                    time: timelineVal, 
+                    details: `${college} - ${pdfName}`, 
+                    time: deliveryTime, 
                     status: "Pending", 
                     badge: "badge-pending" 
                 }
             ],
             activityLog: [
-                { time: "Just Now", event: "Successfully registered and submitted assignment order." }
+                { time: "Just Now", event: `Submitted assignment request for ${college}.` }
             ]
         };
-
-        // Save into Browser Local Storage
         localStorage.setItem('savedCustomer', JSON.stringify(customerData));
 
-        // Push data live to Google Sheet using SheetDB API (Customer Tab)
+        // Push data live to Google Sheet (Customer Tab)
         try {
             await fetch(`${SHEETDB_URL}?sheet=Customer`, {
                 method: 'POST',
@@ -363,46 +371,55 @@ if (customerForm) {
                 },
                 body: JSON.stringify({
                     data: {
-                        "Timestamp": new Date().toLocaleString(),
-                        "Name": nameVal,
-                        "Email": emailVal,
-                        "Phone": phoneVal,
-                        "Timeline": timelineVal
+                        "Name": fullName,
+                        "Delivery Time": deliveryTime,
+                        "Roll no.": rollNo,
+                        "college name": college,
+                        "PDF": pdfName,
+                        "Delivery Address": deliveryAddress,
+                        "Message for Us": message,
+                        "Current status": "Pending"
                     }
                 })
             });
+            alert('Client request submitted successfully!');
         } catch (error) {
-            console.error('Error sending data to Google Sheets via SheetDB:', error);
+            console.error('SheetDB Sync Error:', error);
+            alert('Saved locally, but failed to sync to Google Sheets.');
         }
-
-        alert('Order submitted successfully! Details synced with Google Sheets.');
         
-        showView('account-view');
-        switchDashboardRole('customer');
+        if (typeof showView === 'function') showView('account-view');
+        if (typeof switchDashboardRole === 'function') switchDashboardRole('customer');
     });
 }
 
-// 2. SAVE WRITER DATA ON FORM SUBMISSION & SEND TO GOOGLE SHEET
+// 2. WRITER APPLICATION FORM HANDLER
 const writerForm = document.getElementById('writerForm');
 if (writerForm) {
     writerForm.addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        const nameVal = document.getElementById('writerName')?.value || "Active Writer";
-        const emailVal = document.getElementById('writerEmail')?.value || "writer@example.com";
-        const phoneVal = document.getElementById('writerPhone')?.value || "+91 XXXXX XXXXX";
-        const collegeVal = document.getElementById('writerCollege')?.value || "Not Specified";
-        const branchVal = document.getElementById('writerBranch')?.value || "Not Specified";
-        const minPagesVal = document.getElementById('minPages')?.value || "5";
+        // Grab inputs matching Screenshot 2 (Writer Application Form)
+        const fullName = document.getElementById('writerName')?.value || '';
+        const mobile = document.getElementById('writerPhone')?.value || '';
+        const email = document.getElementById('writerEmail')?.value || '';
+        const college = document.getElementById('writerCollege')?.value || '';
+        const branch = document.getElementById('writerBranch')?.value || '';
+        const minPages = document.getElementById('minPages')?.value || '';
 
+        // Handle Handwriting Sample File
+        const sampleFile = document.getElementById('writerSample')?.files[0];
+        const sampleName = sampleFile ? sampleFile.name : 'No sample uploaded';
+
+        // Update Local Storage Dashboard
         const writerData = {
-            name: nameVal,
-            email: emailVal,
-            phone: phoneVal,
+            name: fullName || "Active Writer",
+            email: email || "writer@example.com",
+            phone: mobile || "+91 XXXXX XXXXX",
             roleMeta: "Verified Candidate",
-            college: collegeVal,
-            branch: branchVal,
-            capacity: `${minPagesVal} Pages/Day`,
+            college: college,
+            branch: branch,
+            capacity: `${minPages} Pages/Day`,
             stats: {
                 col1: { title: "Jobs Written", val: "0 Tasks" },
                 col2: { title: "Total Earned", val: "Rs 0.00" },
@@ -415,11 +432,9 @@ if (writerForm) {
                 { time: "Just Now", event: "Applied to Writer's World. Awaiting profile check." }
             ]
         };
-
-        // Save into Browser Local Storage
         localStorage.setItem('savedWriter', JSON.stringify(writerData));
 
-        // Push data live to Google Sheet using SheetDB API (Writer Tab)
+        // Push data live to Google Sheet (Writer Tab)
         try {
             await fetch(`${SHEETDB_URL}?sheet=Writer`, {
                 method: 'POST',
@@ -429,24 +444,25 @@ if (writerForm) {
                 },
                 body: JSON.stringify({
                     data: {
-                        "Timestamp": new Date().toLocaleString(),
-                        "Name": nameVal,
-                        "Email": emailVal,
-                        "Phone": phoneVal,
-                        "College": collegeVal,
-                        "Branch": branchVal,
-                        "Daily Capacity": minPagesVal
+                        "Name": fullName,
+                        "Mobile Number": mobile,
+                        "Email": email,
+                        "College": college,
+                        "Branch": branch,
+                        "Handwriting Sample": sampleName,
+                        "Daily Capacity": minPages,
+                        "Current status": "Under Review"
                     }
                 })
             });
+            alert('Writer application submitted successfully!');
         } catch (error) {
-            console.error('Error sending data to Google Sheets via SheetDB:', error);
+            console.error('SheetDB Sync Error:', error);
+            alert('Application saved locally, but failed to sync to Google Sheets.');
         }
 
-        alert('Application received! Profile stored in Google Sheets.');
-        
-        showView('account-view');
-        switchDashboardRole('writer');
+        if (typeof showView === 'function') showView('account-view');
+        if (typeof switchDashboardRole === 'function') switchDashboardRole('writer');
     });
 }
 
@@ -551,8 +567,8 @@ if (localLoginForm) {
     localLoginForm.addEventListener('submit', function(e) {
         e.preventDefault(); 
         
-        const enteredEmail = document.getElementById('loginEmail').value.trim().toLowerCase();
-        const selectedRole = document.getElementById('loginRole').value;
+        const enteredEmail = document.getElementById('loginEmail')?.value.trim().toLowerCase();
+        const selectedRole = document.getElementById('loginRole')?.value;
         
         if (selectedRole === 'customer') {
             const savedCustomerRaw = localStorage.getItem('savedCustomer');
@@ -561,7 +577,7 @@ if (localLoginForm) {
                 const customerData = JSON.parse(savedCustomerRaw);
                 if (customerData.email.toLowerCase() === enteredEmail) {
                     alert(`Welcome back, ${customerData.name}!`);
-                    showView('account-view');
+                    if (typeof showView === 'function') showView('account-view');
                     
                     const roleSelector = document.getElementById('userRoleSelector');
                     if (roleSelector) roleSelector.value = 'customer';
@@ -578,7 +594,7 @@ if (localLoginForm) {
                 const writerData = JSON.parse(savedWriterRaw);
                 if (writerData.email.toLowerCase() === enteredEmail) {
                     alert(`Welcome back to the studio, ${writerData.name}!`);
-                    showView('account-view');
+                    if (typeof showView === 'function') showView('account-view');
                     
                     const roleSelector = document.getElementById('userRoleSelector');
                     if (roleSelector) roleSelector.value = 'writer';
