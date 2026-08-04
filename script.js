@@ -337,12 +337,40 @@ document.addEventListener('DOMContentLoaded', () => {
 // -------------------------------------------------------------
 // 2. CLIENT PORTAL FORM HANDLER (Replace your existing customerForm block)
 // -------------------------------------------------------------
+// Google Apps Script Web App URL
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw4BS4kFZ_4cmH-Qa42bj1KB1fMq82Eoudh-8MQfXvQW3jcOeLNikOQz1Q3oYfBlRsp/exec';
+
+// -------------------------------------------------------------
+// NAVIGATION HELPERS
+// -------------------------------------------------------------
+function showSection(sectionId) {
+    document.querySelectorAll('.view-section').forEach(section => {
+        if (section) section.classList.remove('active');
+    });
+    
+    const target = document.getElementById(sectionId) || document.getElementById(`${sectionId}-section`);
+    if (target) {
+        target.classList.add('active');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showView(viewId) {
+    const cleanId = viewId.replace('-view', '');
+    showSection(cleanId);
+}
+
+// -------------------------------------------------------------
+// 1. CLIENT / CUSTOMER FORM HANDLER
+// -------------------------------------------------------------
 const customerForm = document.getElementById('customerForm');
 if (customerForm) {
     customerForm.addEventListener('submit', async function(e) {
-        e.preventDefault(); 
-        
-        // Extract field values
+        e.preventDefault();
+
+        const submitBtn = customerForm.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+
         const fullName = document.getElementById('custName')?.value || '';
         const rollNo = document.getElementById('custRollNo')?.value || '';
         const email = document.getElementById('custEmail')?.value || '';
@@ -353,62 +381,76 @@ if (customerForm) {
         const deliveryTime = document.getElementById('deliveryTime')?.value || 'Flexible';
         const deliveryAddress = document.getElementById('custAddress')?.value || '';
         const message = document.getElementById('custMessage')?.value || '';
-        
-        // 📄 FILE DEBUGGING
-        const pdfFileInput = document.getElementById('customerPdf')?.files[0];
-        console.log("Selected PDF File:", pdfFileInput);
 
-        if (!pdfFileInput) {
-            alert("Warning: No file detected! Check if <input id='customerPdf'> matches HTML.");
+        const pdfFileInput = document.getElementById('customerPdf')?.files[0];
+
+        const sendCustomerData = async (base64File = '', fileName = '', mimeType = '') => {
+            const payload = {
+                formType: "customer",
+                name: fullName,
+                rollNo: rollNo,
+                email: email,
+                college: college,
+                deliveryTime: deliveryTime,
+                address: deliveryAddress,
+                message: message,
+                fileData: base64File,
+                fileName: fileName,
+                mimeType: mimeType
+            };
+
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+
+                const res = await response.json();
+                if (res.result === 'success') {
+                    alert('Client request submitted successfully! PDF saved to Google Drive and linked in Google Sheet.');
+                    customerForm.reset();
+                } else {
+                    alert('Error saving customer data: ' + res.error);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Network error submitting client request.');
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        };
+
+        if (pdfFileInput) {
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                sendCustomerData(evt.target.result, pdfFileInput.name, pdfFileInput.type);
+            };
+            reader.readAsDataURL(pdfFileInput);
+        } else {
+            sendCustomerData();
         }
 
-        const pdfDataUrl = await convertFileToDataUrl(pdfFileInput);
-        console.log("PDF String Length:", pdfDataUrl.length);
-
-        // Send Data to SheetDB
         try {
-            const response = await fetch(`${SHEETDB_URL}?sheet=Customer`, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    data: {
-                        "Name": fullName,
-                        "Delivery Time": deliveryTime,
-                        "Roll no.": rollNo,
-                        "college name": college,
-                        "PDF": pdfDataUrl,
-                        "Delivery Address": deliveryAddress,
-                        "Message for Us": message,
-                        "Current status": "Pending"
-                    }
-                })
-            });
-
-            const responseData = await response.json();
-            console.log("SheetDB Server Response:", responseData);
-
-            if (response.ok) {
-                alert('Client request submitted successfully!');
-            } else {
-                alert(`SheetDB error: ${JSON.stringify(responseData)}`);
-            }
-        } catch (error) {
-            console.error('SheetDB Sync Error:', error);
-            alert('Network error occurred while submitting.');
+            if (typeof switchDashboardRole === 'function') switchDashboardRole('customer');
+            if (typeof showView === 'function') showView('account-view');
+        } catch (err) {
+            console.warn('Navigation warning:', err);
         }
     });
 }
 
+// -------------------------------------------------------------
 // 2. WRITER APPLICATION FORM HANDLER
+// -------------------------------------------------------------
 const writerForm = document.getElementById('writerForm');
 if (writerForm) {
     writerForm.addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        // Grab inputs matching Screenshot 2 (Writer Application Form)
+        const submitBtn = writerForm.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+
         const fullName = document.getElementById('writerName')?.value || '';
         const mobile = document.getElementById('writerPhone')?.value || '';
         const email = document.getElementById('writerEmail')?.value || '';
@@ -416,65 +458,62 @@ if (writerForm) {
         const branch = document.getElementById('writerBranch')?.value || '';
         const minPages = document.getElementById('minPages')?.value || '';
 
-        // Handle Handwriting Sample File
-        const sampleFile = document.getElementById('writerSample')?.files[0];
-        const sampleName = sampleFile ? sampleFile.name : 'No sample uploaded';
+        const sampleFileInput = document.getElementById('writerSample')?.files[0];
 
-        // Update Local Storage Dashboard
-        const writerData = {
-            name: fullName || "Active Writer",
-            email: email || "writer@example.com",
-            phone: mobile || "+91 XXXXX XXXXX",
-            roleMeta: "Verified Candidate",
-            college: college,
-            branch: branch,
-            capacity: `${minPages} Pages/Day`,
-            stats: {
-                col1: { title: "Jobs Written", val: "0 Tasks" },
-                col2: { title: "Total Earned", val: "Rs 0.00" },
-                col3: { title: "In Pipeline", val: "0 Tasks" }
-            },
-            jobs: [
-                { id: "#TASK-NEW", details: "Profile Under Verification Process", pay: "N/A", status: "In Progress", badge: "badge-progress" }
-            ],
-            activityLog: [
-                { time: "Just Now", event: "Applied to Writer's World. Awaiting profile check." }
-            ]
+        const sendWriterData = async (base64File = '', fileName = '', mimeType = '') => {
+            const payload = {
+                formType: "writer",
+                name: fullName,
+                mobile: mobile,
+                email: email,
+                college: college,
+                branch: branch,
+                minPages: minPages,
+                fileData: base64File,
+                fileName: fileName,
+                mimeType: mimeType
+            };
+
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+
+                const res = await response.json();
+                if (res.result === 'success') {
+                    alert('Writer application submitted! Sample saved to Google Drive and linked in Google Sheet.');
+                    writerForm.reset();
+                } else {
+                    alert('Error saving writer application: ' + res.error);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Network error submitting writer application.');
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+            }
         };
-        localStorage.setItem('savedWriter', JSON.stringify(writerData));
 
-        // Push data live to Google Sheet (Writer Tab)
-        try {
-            await fetch(`${SHEETDB_URL}?sheet=Writer`, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    data: {
-                        "Name": fullName,
-                        "Mobile Number": mobile,
-                        "Email": email,
-                        "College": college,
-                        "Branch": branch,
-                        "Handwriting Sample": sampleName,
-                        "Daily Capacity": minPages,
-                        "Current status": "Under Review"
-                    }
-                })
-            });
-            alert('Writer application submitted successfully!');
-        } catch (error) {
-            console.error('SheetDB Sync Error:', error);
-            alert('Application saved locally, but failed to sync to Google Sheets.');
+        if (sampleFileInput) {
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                sendWriterData(evt.target.result, sampleFileInput.name, sampleFileInput.type);
+            };
+            reader.readAsDataURL(sampleFileInput);
+        } else {
+            sendWriterData();
         }
 
-        if (typeof showView === 'function') showView('account-view');
-        if (typeof switchDashboardRole === 'function') switchDashboardRole('writer');
+        try {
+            if (typeof switchDashboardRole === 'function') switchDashboardRole('writer');
+            if (typeof showView === 'function') showView('account-view');
+        } catch (err) {
+            console.warn('Navigation warning:', err);
+        }
     });
 }
-
 // 3. UPDATED DASHBOARD SWITCHER TO READ DYNAMIC STORAGE
 function switchDashboardRole(role) {
     const isWriter = (role === 'writer');
