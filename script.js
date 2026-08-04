@@ -342,25 +342,30 @@ if (customerForm) {
     customerForm.addEventListener('submit', async function(e) {
         e.preventDefault(); 
         
-        // Extract field values matching your HTML IDs
+        // Extract field values
         const fullName = document.getElementById('custName')?.value || '';
         const rollNo = document.getElementById('custRollNo')?.value || '';
         const email = document.getElementById('custEmail')?.value || '';
         
-        // Get Selected College Name from Dropdown
         const collegeSelect = document.getElementById('custCollege');
         const college = collegeSelect ? collegeSelect.options[collegeSelect.selectedIndex]?.text : '';
         
-        // Get remaining form inputs
         const deliveryTime = document.getElementById('deliveryTime')?.value || 'Flexible';
         const deliveryAddress = document.getElementById('custAddress')?.value || '';
         const message = document.getElementById('custMessage')?.value || '';
         
-        // 📄 Convert PDF File to Openable Data String
+        // 📄 FILE DEBUGGING
         const pdfFileInput = document.getElementById('customerPdf')?.files[0];
-        const pdfDataUrl = await convertFileToDataUrl(pdfFileInput);
+        console.log("Selected PDF File:", pdfFileInput);
 
-        // Send Data to Google Sheet via SheetDB
+        if (!pdfFileInput) {
+            alert("Warning: No file detected! Check if <input id='customerPdf'> matches HTML.");
+        }
+
+        const pdfDataUrl = await convertFileToDataUrl(pdfFileInput);
+        console.log("PDF String Length:", pdfDataUrl.length);
+
+        // Send Data to SheetDB
         try {
             const response = await fetch(`${SHEETDB_URL}?sheet=Customer`, {
                 method: 'POST',
@@ -374,7 +379,7 @@ if (customerForm) {
                         "Delivery Time": deliveryTime,
                         "Roll no.": rollNo,
                         "college name": college,
-                        "PDF": pdfDataUrl, // <-- Uploaded PDF is now stored here
+                        "PDF": pdfDataUrl,
                         "Delivery Address": deliveryAddress,
                         "Message for Us": message,
                         "Current status": "Pending"
@@ -382,11 +387,13 @@ if (customerForm) {
                 })
             });
 
+            const responseData = await response.json();
+            console.log("SheetDB Server Response:", responseData);
+
             if (response.ok) {
                 alert('Client request submitted successfully!');
-                customerForm.reset(); // Resets form fields after submission
             } else {
-                alert('Submission failed. Please check sheet configuration.');
+                alert(`SheetDB error: ${JSON.stringify(responseData)}`);
             }
         } catch (error) {
             console.error('SheetDB Sync Error:', error);
