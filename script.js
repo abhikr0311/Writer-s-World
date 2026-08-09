@@ -341,6 +341,23 @@ document.addEventListener('DOMContentLoaded', () => {
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw4BS4kFZ_4cmH-Qa42bj1KB1fMq82Eoudh-8MQfXvQW3jcOeLNikOQz1Q3oYfBlRsp/exec';
 
 // -------------------------------------------------------------
+// HELPER: Safely Convert File to Base64 with Async/Await
+// -------------------------------------------------------------
+function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+        if (!file) resolve(null);
+        const reader = new FileReader();
+        reader.onload = () => resolve({
+            data: reader.result,
+            name: file.name,
+            type: file.type
+        });
+        reader.onerror = (error) => reject(error);
+        reader.readAsDataURL(file);
+    });
+}
+
+// -------------------------------------------------------------
 // NAVIGATION HELPERS
 // -------------------------------------------------------------
 function showSection(sectionId) {
@@ -369,22 +386,33 @@ if (customerForm) {
         e.preventDefault();
 
         const submitBtn = customerForm.querySelector('button[type="submit"]');
-        if (submitBtn) submitBtn.disabled = true;
+        const originalBtnText = submitBtn ? submitBtn.innerText : '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Uploading & Submitting...";
+        }
 
-        const fullName = document.getElementById('custName')?.value || '';
-        const rollNo = document.getElementById('custRollNo')?.value || '';
-        const email = document.getElementById('custEmail')?.value || '';
-        
-        const collegeSelect = document.getElementById('custCollege');
-        const college = collegeSelect ? collegeSelect.options[collegeSelect.selectedIndex]?.text : '';
-        
-        const deliveryTime = document.getElementById('deliveryTime')?.value || 'Flexible';
-        const deliveryAddress = document.getElementById('custAddress')?.value || '';
-        const message = document.getElementById('custMessage')?.value || '';
+        try {
+            // Extract Form Values
+            const fullName = document.getElementById('custName')?.value || '';
+            const rollNo = document.getElementById('custRollNo')?.value || '';
+            const email = document.getElementById('custEmail')?.value || '';
+            
+            const collegeSelect = document.getElementById('custCollege');
+            const college = collegeSelect ? collegeSelect.options[collegeSelect.selectedIndex]?.text : '';
+            
+            const deliveryTime = document.getElementById('deliveryTime')?.value || 'Flexible';
+            const deliveryAddress = document.getElementById('custAddress')?.value || '';
+            const message = document.getElementById('custMessage')?.value || '';
 
-        const pdfFileInput = document.getElementById('customerPdf')?.files[0];
+            // 1. AWAIT File Read
+            const pdfFileInput = document.getElementById('customerPdf')?.files[0];
+            let fileObj = null;
+            if (pdfFileInput) {
+                fileObj = await readFileAsBase64(pdfFileInput);
+            }
 
-        const sendCustomerData = async (base64File = '', fileName = '', mimeType = '') => {
+            // 2. Prepare Payload
             const payload = {
                 formType: "customer",
                 name: fullName,
@@ -394,48 +422,65 @@ if (customerForm) {
                 deliveryTime: deliveryTime,
                 address: deliveryAddress,
                 message: message,
-                fileData: base64File,
-                fileName: fileName,
-                mimeType: mimeType
+                fileData: fileObj ? fileObj.data : '',
+                fileName: fileObj ? fileObj.name : '',
+                mimeType: fileObj ? fileObj.type : ''
             };
 
-            try {
-                const response = await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                });
+            // 3. AWAIT Web Request to Google Apps Script
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            });
 
-                const res = await response.json();
-                if (res.result === 'success') {
-                    alert('Client request submitted successfully! PDF saved to Google Drive and linked in Google Sheet.');
-                    customerForm.reset();
-                } else {
-                    alert('Error saving customer data: ' + res.error);
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Network error submitting client request.');
-            } finally {
-                if (submitBtn) submitBtn.disabled = false;
+            const res = await response.json();
+
+            if (res.result === 'success') {
+                alert('Client request submitted successfully! File saved to Google Drive.');
+                customerForm.reset();
+
+                // Save to local storage for user dashboard
+                const customerData = {
+                    name: fullName || "Active Customer",
+                    email: email || "customer@example.com",
+                    phone: "+91 XXXXX XXXXX",
+                    roleMeta: "Registered Client",
+                    stats: {
+                        col1: { title: "Jobs Ordered", val: "1 File" },
+                        col2: { title: "Total Spent", val: "Rs 60" },
+                        col3: { title: "Completed", val: "0 Files" }
+                    },
+                    orders: [
+                        { 
+                            id: "#GW-" + Math.floor(1000 + Math.random() * 9000),
+                            details: `${college} - Assignment`, 
+                            time: deliveryTime, 
+                            status: "Pending", 
+                            badge: "badge-pending" 
+                        }
+                    ],
+                    activityLog: [
+                        { time: "Just Now", event: `Submitted assignment request for ${college}.` }
+                    ]
+                };
+                localStorage.setItem('savedCustomer', JSON.stringify(customerData));
+
+                // Switch view ONLY after successful upload completion
+                if (typeof switchDashboardRole === 'function') switchDashboardRole('customer');
+                if (typeof showView === 'function') showView('account-view');
+            } else {
+                alert('Error from Google Server: ' + res.error);
             }
-        };
 
-        if (pdfFileInput) {
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                sendCustomerData(evt.target.result, pdfFileInput.name, pdfFileInput.type);
-            };
-            reader.readAsDataURL(pdfFileInput);
-        } else {
-            sendCustomerData();
-        }
-
-        try {
-            if (typeof switchDashboardRole === 'function') switchDashboardRole('customer');
-            if (typeof showView === 'function') showView('account-view');
         } catch (err) {
-            console.warn('Navigation warning:', err);
+            console.error('Submission Error:', err);
+            alert('Submission failed. Check network or file size (keep file under 10MB).');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalBtnText || "Submit";
+            }
         }
     });
 }
@@ -449,18 +494,29 @@ if (writerForm) {
         e.preventDefault();
 
         const submitBtn = writerForm.querySelector('button[type="submit"]');
-        if (submitBtn) submitBtn.disabled = true;
+        const originalBtnText = submitBtn ? submitBtn.innerText : '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Uploading & Submitting...";
+        }
 
-        const fullName = document.getElementById('writerName')?.value || '';
-        const mobile = document.getElementById('writerPhone')?.value || '';
-        const email = document.getElementById('writerEmail')?.value || '';
-        const college = document.getElementById('writerCollege')?.value || '';
-        const branch = document.getElementById('writerBranch')?.value || '';
-        const minPages = document.getElementById('minPages')?.value || '';
+        try {
+            // Extract Form Values
+            const fullName = document.getElementById('writerName')?.value || '';
+            const mobile = document.getElementById('writerPhone')?.value || '';
+            const email = document.getElementById('writerEmail')?.value || '';
+            const college = document.getElementById('writerCollege')?.value || '';
+            const branch = document.getElementById('writerBranch')?.value || '';
+            const minPages = document.getElementById('minPages')?.value || '';
 
-        const sampleFileInput = document.getElementById('writerSample')?.files[0];
+            // 1. AWAIT File Read
+            const sampleFileInput = document.getElementById('writerSample')?.files[0];
+            let fileObj = null;
+            if (sampleFileInput) {
+                fileObj = await readFileAsBase64(sampleFileInput);
+            }
 
-        const sendWriterData = async (base64File = '', fileName = '', mimeType = '') => {
+            // 2. Prepare Payload
             const payload = {
                 formType: "writer",
                 name: fullName,
@@ -469,48 +525,62 @@ if (writerForm) {
                 college: college,
                 branch: branch,
                 minPages: minPages,
-                fileData: base64File,
-                fileName: fileName,
-                mimeType: mimeType
+                fileData: fileObj ? fileObj.data : '',
+                fileName: fileObj ? fileObj.name : '',
+                mimeType: fileObj ? fileObj.type : ''
             };
 
-            try {
-                const response = await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                });
+            // 3. AWAIT Web Request to Google Apps Script
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            });
 
-                const res = await response.json();
-                if (res.result === 'success') {
-                    alert('Writer application submitted! Sample saved to Google Drive and linked in Google Sheet.');
-                    writerForm.reset();
-                } else {
-                    alert('Error saving writer application: ' + res.error);
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Network error submitting writer application.');
-            } finally {
-                if (submitBtn) submitBtn.disabled = false;
+            const res = await response.json();
+
+            if (res.result === 'success') {
+                alert('Writer application submitted! Sample saved to Google Drive.');
+                writerForm.reset();
+
+                // Save to local storage for user dashboard
+                const writerData = {
+                    name: fullName || "Active Writer",
+                    email: email || "writer@example.com",
+                    phone: mobile || "+91 XXXXX XXXXX",
+                    roleMeta: "Verified Candidate",
+                    college: college,
+                    branch: branch,
+                    capacity: `${minPages} Pages/Day`,
+                    stats: {
+                        col1: { title: "Jobs Written", val: "0 Tasks" },
+                        col2: { title: "Total Earned", val: "Rs 0.00" },
+                        col3: { title: "In Pipeline", val: "0 Tasks" }
+                    },
+                    jobs: [
+                        { id: "#TASK-NEW", details: "Profile Under Verification Process", pay: "N/A", status: "In Progress", badge: "badge-progress" }
+                    ],
+                    activityLog: [
+                        { time: "Just Now", event: "Applied to Writer's World. Awaiting profile check." }
+                    ]
+                };
+                localStorage.setItem('savedWriter', JSON.stringify(writerData));
+
+                // Switch view ONLY after successful upload completion
+                if (typeof switchDashboardRole === 'function') switchDashboardRole('writer');
+                if (typeof showView === 'function') showView('account-view');
+            } else {
+                alert('Error from Google Server: ' + res.error);
             }
-        };
 
-        if (sampleFileInput) {
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                sendWriterData(evt.target.result, sampleFileInput.name, sampleFileInput.type);
-            };
-            reader.readAsDataURL(sampleFileInput);
-        } else {
-            sendWriterData();
-        }
-
-        try {
-            if (typeof switchDashboardRole === 'function') switchDashboardRole('writer');
-            if (typeof showView === 'function') showView('account-view');
         } catch (err) {
-            console.warn('Navigation warning:', err);
+            console.error('Submission Error:', err);
+            alert('Submission failed. Check network or file size (keep file under 10MB).');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalBtnText || "Submit Application";
+            }
         }
     });
 }
