@@ -437,7 +437,7 @@ if (customerForm) {
             const res = await response.json();
 
             if (res.result === 'success') {
-                alert('Client request submitted successfully! File saved to Google Drive.');
+               document.getElementById("submissionMessage").innerText = "submitted"
                 customerForm.reset();
 
                 // Save to local storage for user dashboard
