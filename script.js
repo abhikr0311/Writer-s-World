@@ -396,7 +396,8 @@ if (customerForm) {
             // Extract Form Values
             const fullName = document.getElementById('custName')?.value || '';
             const rollNo = document.getElementById('custRollNo')?.value || '';
-            const email = document.getElementById('custEmail')?.value || '';
+            const number = document.getElementById('custEmail')?.value || '';
+            const email = document.getElementById('custNumber')?.value || '';
             
             const collegeSelect = document.getElementById('custCollege');
             const college = collegeSelect ? collegeSelect.options[collegeSelect.selectedIndex]?.text : '';
@@ -418,6 +419,7 @@ if (customerForm) {
                 name: fullName,
                 rollNo: rollNo,
                 email: email,
+                number: number,
                 college: college,
                 deliveryTime: deliveryTime,
                 address: deliveryAddress,
